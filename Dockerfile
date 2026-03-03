@@ -1,14 +1,17 @@
-# Buduj frontend
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+# Użyj lekkiej bazy Python
+FROM python:3.11-slim
 
-# Serwuj statyczne pliki
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Ustaw katalog roboczy
+WORKDIR /app
+
+# Skopiuj zależności
+COPY requirements.txt .
+
+# Zainstaluj pakiety
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Skopiuj cały kod
+COPY . .
+
+# Uruchom aplikację (zmień na swój entrypoint)
+CMD # albo jeśli FastAPI: CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
