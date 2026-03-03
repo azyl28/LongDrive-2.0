@@ -1,0 +1,39 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker europe-central2-docker.pkg.dev
+
+      - name: Build and push
+        run: |
+          docker build -t europe-central2-docker.pkg.dev/long-live-drive/my-repo/longdrive-predict:latest .
+          docker push europe-central2-docker.pkg.dev/long-live-drive/my-repo/longdrive-predict:latest
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: longdrive-predict
+          image: europe-central2-docker.pkg.dev/long-live-drive/my-repo/longdrive-predict:latest
+          region: europe-central2
+          allow-unauthenticated: true
